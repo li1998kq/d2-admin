@@ -5,6 +5,7 @@ import { get, isEmpty } from 'lodash'
 import qs from 'qs'
 import util from '@/libs/util'
 import store from '@/store'
+// import { reject, resolve } from 'core-js/fn/promise'
 
 /**
  * @description 记录和显示错误
@@ -120,15 +121,15 @@ function stringify (data) {
  * @description 创建请求方法
  * @param {Object} service axios 实例
  */
-function createRequest (service) {
+function createRequest ( ) {
   return function (config) {
-    const token = util.cookies.get('token')
+    // const token = util.cookies.get('token')
     const configDefault = {
       headers: {
-        Authorization: token,
+        // Authorization: token,
         'Content-Type': get(config, 'headers.Content-Type', 'application/json')
       },
-      timeout: 5000,
+      timeout: 10000,
       baseURL: process.env.VUE_APP_API,
       data: {}
     }
@@ -141,13 +142,28 @@ function createRequest (service) {
     }
     // 当需要以 form 形式发送时 处理发送的数据
     // 请根据实际需要修改
-    if (!isEmpty(option.data) && option.headers['Content-Type'] === 'application/x-www-form-urlencoded') {
-      option.data = stringify(option.data)
-    }
+    // if (!isEmpty(option.data) && option.headers['Content-Type'] === 'application/x-www-form-urlencoded') {
+    //   option.data = stringify(option.data)
+    // }
     return service(option)
   }
 }
 
+ export function getdata(url,params){
+        return new Promise((resolve,reject)=>{
+          axios.get({
+            method:"get",
+              url,
+              params
+          })
+          .then(res => {
+            resolve(res)
+          })
+          .catch(err => {
+            reject(err,"请求出现错误")
+          })
+        })
+}
 // 用于真实网络请求的实例和请求方法
 export const service = createService()
 export const request = createRequest(service)

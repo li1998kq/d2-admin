@@ -25,6 +25,50 @@ const frameIn = [
           auth: true
         },
         component: _import('system/index')
+      },{
+        path: '/page-demo',
+        name: 'page-demo',
+        component: () => import('@/pages/page-demo'),
+        meta: {
+          auth: true,
+          title: 'demo'
+        }
+      },
+      {
+        path: '/computerConfig',
+        name: 'computerConfig',
+        component: () => import('@/views/computerConfig/computerConfig'),
+        meta: {
+          auth: true,
+          title: '电脑管理'
+        }
+      },
+      {
+        path: '/department',
+        name: 'department',
+        component: () => import('@/views/department/department'),
+        meta: {
+          auth: true,
+          title: '部门管理'
+        }
+      },
+      {
+        path: '/faqs',
+        name: 'faqs',
+        component: () => import('@/views/FAQs/FAQ'),
+        meta: {
+          auth: true,
+          title: '问题列表'
+        }
+      },
+      {
+        path: '/insertrepair',
+        name: 'insertrepair',
+        component: () => import('@/views/InsertRepair/InsertRepair'),
+        meta: {
+          auth: true,
+          title: '保修管理'
+        }
       },
       // 系统 前端日志
       {
