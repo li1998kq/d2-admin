@@ -14,7 +14,7 @@ import { method } from 'lodash'
 
 // import { reject, resolve } from 'core-js/fn/promise'
 const urls="http://app.changxinghuiyuan.com/akjsjywzx/Business"
-export function QueryComputerConfigList(count=1){
+export function QueryComputerConfigList(count){
     return new Promise((resolve,reject)=>{
         request({
             url:urls+"/QueryComputerConfigList",
@@ -67,6 +67,12 @@ export function UpdateComputerConfig(data) {
     data
    })
 }
+export function getCom(){
+    return request({
+         url:urls+"/QueryComputerConfigList",
+         method:"get"
+     })   
+ }
 // 保修的api相关配置
 // 得到保修列表
 export function QueryMemberList(count=0) {

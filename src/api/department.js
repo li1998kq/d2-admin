@@ -66,3 +66,36 @@ export function UpdateDepartment(data) {
         data
      })   
  }
+//  部门新增电脑---InsertDepartmentComputer
+ export function InsertDepartmentComputer(data) {
+    return request({
+         url:urls+"/InsertDepartmentComputer",
+         method:"post",
+        data
+     })   
+ }
+//  部门更新电脑
+export function UpdateDepartmentComputer(data) {
+    return request({
+         url:urls+"/UpdateDepartmentComputer",
+         method:"post",
+        data
+     })   
+ }
+//  删除部门电脑
+ export function DeleteDepartmentComputer(data) {
+    return request({
+         url:urls+"/DeleteDepartmentComputer",
+         method:"post",
+        data
+     })   
+ }
+ export function GetDataInfo(a) {
+    return request({
+         url:urls+"/GetDataInfo",
+         method:"get",
+        params:{
+            DepartmentName:a
+        }
+     })   
+ }

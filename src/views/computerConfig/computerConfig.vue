@@ -19,6 +19,8 @@
           style="width: 100%"
           fit
         >
+        <el-table-column label="电脑ID" width="120" prop="ID">
+          </el-table-column>
           <el-table-column label="电脑型号" width="120" prop="ComputerNo">
           </el-table-column>
 

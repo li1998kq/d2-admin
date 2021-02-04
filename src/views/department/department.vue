@@ -65,6 +65,12 @@
                 @click="handleDelete(scope.$index, scope.row)"
                 >删除</el-button
               >
+              <el-button
+                size="mini"
+                type="danger"
+                @click="departmentCom(scope.$index, scope.row)"
+                >电脑配置管理</el-button
+              >
             </template>
           </el-table-column>
         </el-table>
@@ -162,11 +168,112 @@
       </el-row>
       <span slot="footer" class="dialog-footer">
         <el-button @click="show_dialon = false">取 消</el-button>
-        <el-button type="primary" @click="add_department_ture()" v-if="show_choose"
-          >确 定</el-button>
-          <el-button type="primary" @click="UpdateDep()" v-else
-          >更 改</el-button>
+        <el-button
+          type="primary"
+          @click="add_department_ture()"
+          v-if="show_choose"
+          >确 定</el-button
+        >
+        <el-button type="primary" @click="UpdateDep()" v-if="!show_choose"
+          >更 改</el-button
+        >
       </span>
+    </el-dialog>
+    <!-- 电脑配置弹出框 -->
+    <el-dialog
+      :title="
+        '电脑配置：' +
+        this.addComputerDep.Region +
+        '——' +
+        this.addComputerDep.Department
+      "
+      :visible.sync="show_com"
+      width="width"
+    >
+      <el-container>
+        <el-divider> 当前设备</el-divider>
+
+        <el-main>
+          <!-- <h3>当前的设备</h3> -->
+          <div class="Com_card">
+            <el-card v-for="(item, index) in computerList" :key="index">
+              <div class="Com_btn">
+                <el-button
+                  type="info"
+                  size="small"
+                  @click="Com_update(item, index)"
+                  >编辑</el-button
+                >
+                <el-button
+                  type="danger"
+                  size="small"
+                  @click="Com_de(item, index)"
+                  >删除</el-button
+                >
+              </div>
+              <h3>{{ item.ComputerNo }}</h3>
+              <div v-if="update_index != index">数量：{{ item.Number }}</div>
+              <div class="Com_btn">
+                <el-input
+                  v-model="computerUpdate.Number"
+                  placeholder="数量"
+                  v-if="update_index == index"
+                ></el-input>
+                <el-button
+                  type="primary"
+                  @click="update_com"
+                  v-if="update_index == index"
+                  size="small"
+                  >更改</el-button
+                >
+              </div>
+            </el-card>
+          </div>
+          <span v-if="this.computerList.length == 0">当前无设备配置</span>
+        </el-main>
+        <el-divider> 添加设备</el-divider>
+        <el-footer>
+          <el-form
+            label-position="left"
+            :inline="true"
+            :model="addComputerDep"
+            class="computer_form"
+          >
+            <el-form-item label=" 选择设备">
+              <el-select
+                v-model="addComputerDep.ComputerConfigId"
+                placeholder="请选择"
+              >
+                <el-option
+                  v-for="item in computerList_Choose"
+                  :key="item.value"
+                  :label="item.ComputerNo"
+                  :value="item.ID"
+                >
+                </el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="设备数量">
+              <el-input
+                type="number"
+                placeholder="请输入数量"
+                class="input"
+                v-model="addComputerDep.Number"
+              ></el-input>
+            </el-form-item>
+            <el-form-item label=".">
+              <el-button type="primary" @click="addComputer_true"
+                >确定新增</el-button
+              >
+            </el-form-item>
+          </el-form>
+        </el-footer>
+      </el-container>
+
+      <div slot="footer" style="text-align: center; margin-top: 20px">
+        <!-- <el-button @click="show_com = false">取 消</el-button>
+        <el-button type="primary" @click="show_com = false">确 定</el-button> -->
+      </div>
     </el-dialog>
   </d2-container>
 </template>
@@ -179,8 +286,13 @@ import {
   GetRegion,
   GetDepartmentAll,
   InsertDepartment,
-  UpdateDepartment
+  UpdateDepartment,
+  InsertDepartmentComputer,
+  UpdateDepartmentComputer,
+  DeleteDepartmentComputer,
+  GetDataInfo,
 } from "@/api/department";
+import * as comInfo from "@/api/computes.js";
 export default {
   data() {
     return {
@@ -197,12 +309,13 @@ export default {
       tableData: [],
       multipleSelection: [],
       show_dialon: false,
+      show_computerUpdate: false,
       dialog_details: [],
       departmentpage: {
         pageSize: 10,
         current_page: 1,
         totals: 5,
-        val:new Number,
+        val: new Number(),
       },
       add_departments: {
         Region: "",
@@ -222,22 +335,57 @@ export default {
       },
       options: [],
       value_change: "",
-      show_choose:true,
+      show_choose: true,
+      show_com: false,
+      computerList: new Array(),
+      computerList_Choose: new Array(),
+      computerID_Choose: new Number(),
+      computer_id: new Number(),
+      addComputerDep: {
+        ID: Number,
+        Region: new String(),
+        Department: new String(),
+        DepartmentID: new Number(),
+        ComputerConfigID: new Number(),
+        Number: new Number(),
+      },
+      /**删除的选择
+       */
 
+      computerUpdate: {
+        ID: Number,
+        Region: "",
+        Department: "",
+        DepartmentID: new Number(),
+        ComputerConfigID: new Number(),
+        Number: Number,
+      },
+      /**正在编辑的index
+       * @type {Number}
+       */
+      update_index: null,
     };
   },
+
   created() {
     this.GetDepartment(0);
+    this.getcomputerList();
   },
   mounted() {
     this.GetRegions();
   },
   methods: {
+    getcomputerList() {
+      comInfo.getCom().then((res) => {
+        console.log(res);
+        this.computerList_Choose = res.Result.List;
+      });
+    },
     handleEdit(b) {
       this.show_dialon = true;
       console.log(b.row);
       this.add_departments = b.row;
-      this.show_choose=false;
+      this.show_choose = false;
     },
     handleDelete(a, b) {
       console.log(b);
@@ -251,7 +399,7 @@ export default {
         .then((res) => {
           this.tableData = res.Result.List;
           this.departmentpage.totals = res.Result.Count;
-          console.log(res)
+          console.log(res);
         })
         .catch((err) => {
           this.$message("出现错误");
@@ -261,21 +409,20 @@ export default {
       this.show_dialon = true;
       this.add_departments = this.$options.data().add_departments;
       this.model_region1 = [];
+      this.show_choose = true;
     },
     // 更新部门信息update
-    UpdateDep(){
-        UpdateDepartment(this.add_departments).then(()=>{
-          this.$message.success("更新成功")
-          this.show_dialon=false;
-        })
+    UpdateDep() {
+      UpdateDepartment(this.add_departments).then(() => {
+        this.$message.success("更新成功");
+        this.show_dialon = false;
+      });
     },
     add_list() {},
     add_department_ture() {
-      //  this.add_departments.Region=this.model_region1[0]
-      // this.add_departments.DepartmentName=this.model_region1[1]
       InsertDepartment(this.add_departments).then((res) => {
         console.log("cg");
-      this.show_dialon = false;
+        this.show_dialon = false;
       });
     },
     // 分页数据
@@ -306,8 +453,92 @@ export default {
         });
     },
     clearsizer() {
-      this.model_region=''
-      this.GetDepartment(this.departmentpage.current_page-1);
+      this.model_region = "";
+      this.GetDepartment(this.departmentpage.current_page - 1);
+    },
+    // 部门电脑配置管理
+    departmentCom(a, b) {
+      // this.GetDataInfoRe()
+      this.show_com = true;
+      this.addComputerDep = this.$options.data().addComputerDep;
+      this.computerList = b.EquipmentList;
+      this.addComputerDep.Region = b.Region;
+      this.addComputerDep.Department = b.DepartmentName;
+      this.addComputerDep.DepartmentID = b.ID;
+      console.log(this.addComputerDep.Department);
+    },
+    // 新增部门电脑
+    addComputer_true() {
+      console.log(this.addComputerDep);
+
+      InsertDepartmentComputer(this.addComputerDep)
+        .then((res) => {
+          // this.GetDepartment(this.departmentpage.current_page-1);
+          this.GetDataInfoRe();
+          //  this.addComputerDep=this.$options.data().addComputerDep
+        })
+        .catch(() => {
+          this.$message("新增失败");
+        });
+    },
+    /**编辑电脑按钮
+     * @param {Number} index 当前索引
+     */
+    Com_update(a, index) {
+      if (index == this.update_index) {
+        this.update_index == null;
+      } else {
+        this.update_index = index;
+      }
+      // console.log(this.computerList[index])
+      // console.log(this.addComputerDep)
+      // console.log(a)
+      var com_id = a.ComputerNo;
+      this.computerList_Choose.map((item) => {
+        if (item.ComputerNo == com_id) {
+          this.computerUpdate.ComputerConfigID =this.computerUpdate.ID=item.ID;
+        }
+      });
+      this.computerUpdate.Region = this.addComputerDep.Region;
+      this.computerUpdate.Department = this.addComputerDep.Department;
+      this.computerUpdate.DepartmentID = this.addComputerDep.DepartmentID;
+      this.computerUpdate.ID = a.Id;
+      this.computerUpdate.Number = a.Number;
+    },
+    Com_de(a) {
+      var com_id = a.ComputerNo;
+      this.computerList_Choose.map((item) => {
+        if (item.ComputerNo == com_id) {
+          this.computerUpdate.ComputerConfigID  =this.computerUpdate.ID=item.ID ;
+        }
+      });
+      this.computerUpdate.Region = this.addComputerDep.Region;
+      this.computerUpdate.Department = this.addComputerDep.Department;
+      this.computerUpdate.DepartmentID = this.addComputerDep.DepartmentID;
+      this.computerUpdate.ID = a.Id;
+      this.computerUpdate.Number = a.Number;
+      console.log(this.computerUpdate);
+      this.$confirm("确定要删除该数据吗？").then(() => {
+        DeleteDepartmentComputer(this.computerUpdate);
+        this.GetDataInfoRe();
+      });
+      // DeleteDepartmentComputer(this.computerUpdate)
+    },
+    update_com() {
+      // console.log(this.computerList)
+      // console.log(this.computerUpdate)
+      UpdateDepartmentComputer(this.computerUpdate).then((res) => {
+        this.update_index = null;
+      });
+      this.GetDataInfoRe()
+    },
+    // 部门电脑刷新
+    GetDataInfoRe() {
+      console.log(this.addComputerDep);
+      GetDataInfo(this.addComputerDep.Department).then((res) => {
+        console.log(res.Result.EquipmentList);
+        this.computerList = res.Result.EquipmentList;
+      });
     },
   },
 };
@@ -325,5 +556,26 @@ el-form-item {
 }
 .mar-s {
   margin: 0 1rem;
+}
+.Com_card {
+  display: flex;
+  justify-content: space-evenly;
+}
+.Com_btn {
+  display: flex;
+  justify-content: space-evenly;
+}
+.input {
+  width: 150px;
+  margin-right: 30px;
+}
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0;
+}
+.computer_form {
+  display: flex;
+  align-items: center;
 }
 </style>
